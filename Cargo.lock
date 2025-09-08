@@ -610,6 +610,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tui-tree-widget"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c14c4488e071617f5b5922222193cdf6725835e492c6229557af85d3c1a4e903"
+dependencies = [
+ "ratatui",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -651,6 +661,7 @@ dependencies = [
  "color-eyre",
  "ratatui",
  "ratzilla",
+ "tui-tree-widget",
 ]
 
 [[package]]

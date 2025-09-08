@@ -1,10 +1,9 @@
 use std::{cell::RefCell, io, rc::Rc};
 
 use ratatui::{
-    layout::Alignment,
-    style::{Color, Stylize},
-    widgets::{Block, BorderType, Paragraph},
     Frame, Terminal,
+    prelude::*,
+    widgets::{Block, Borders, BorderType},
 };
 
 use ratzilla::{
@@ -12,11 +11,13 @@ use ratzilla::{
     DomBackend, WebRenderer,
 };
 
+mod pages_tree;
+
 fn main() -> io::Result<()> {
     let backend = DomBackend::new()?;
     let terminal = Terminal::new(backend)?;
 
-    let state = Rc::new(App::default());
+    let state = Rc::new(App::new());
 
     let event_state = Rc::clone(&state);
     terminal.on_key_event(move |key_event| {
@@ -33,37 +34,43 @@ fn main() -> io::Result<()> {
 
 #[derive(Default)]
 struct App {
-    counter: RefCell<u8>,
+    pages_tree: RefCell<pages_tree::PagesTree>,
 }
 
 impl App {
+    pub fn new() -> Self {
+        Self {
+            pages_tree: RefCell::new(pages_tree::PagesTree::new()),
+        }
+    }
+
     fn render(&self, frame: &mut Frame) {
-        let counter = self.counter.borrow();
-        let block = Block::bordered()
-            .title("upsylonbare")
-            .title_alignment(Alignment::Center)
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(15),
+                Constraint::Percentage(85),
+            ])
+            .split(frame.area());
+        self.pages_tree.borrow_mut().draw(frame, layout[0]);
+
+        let main_area = Block::default()
+            .title("Main Area")
+            .borders(Borders::ALL)
             .border_type(BorderType::Rounded);
-
-        let text = format!(
-            "This is a Ratzilla template.\n\
-             Press left and right to increment and decrement the counter respectively.\n\
-             Counter: {counter}",
-        );
-
-        let paragraph = Paragraph::new(text)
-            .block(block)
-            .fg(Color::White)
-            .bg(Color::Black)
-            .centered();
-
-        frame.render_widget(paragraph, frame.area());
+        let selected_page = self.pages_tree.borrow().get_selected();
+        frame.render_widget(main_area, layout[1]);
+        
     }
 
     fn handle_events(&self, key_event: KeyEvent) {
-        let mut counter = self.counter.borrow_mut();
         match key_event.code {
-            KeyCode::Left => *counter = counter.saturating_sub(1),
-            KeyCode::Right => *counter = counter.saturating_add(1),
+            KeyCode::Down => {
+                self.pages_tree.borrow_mut().state_mut().key_down();
+            }
+            KeyCode::Up => {
+                self.pages_tree.borrow_mut().state_mut().key_up();
+            }
             _ => {}
         }
     }
